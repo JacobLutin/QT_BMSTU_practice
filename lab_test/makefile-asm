@@ -1,0 +1,44 @@
+CC = gcc
+ASMFLAGS = -mllvm -x86-asm-syntax=intel
+
+
+###### Компоновка в исполняемый файл
+
+main: main.o sum.o
+	ld -macosx_version_min 10.10 -o main main.o sum.o -lSystem
+
+
+###### Ассемблирование в объектный файл
+
+main.o: main.s
+	$(CC) -cc1as -filetype obj $(ASMFLAGS) -o main.o main.s
+
+sum.o: sum.s
+	$(CC) -cc1as -filetype obj $(ASMFLAGS) -o sum.o sum.s
+
+
+###### Обработка препроцессором и трансляция на язык ассемблера
+
+main.s: main.c main.h
+	$(CC) -O0 $(ASMFLAGS) -S main.c main.h
+
+sum.s: sum.c main.h
+	$(CC) -O0 $(ASMFLAGS) -S sum.c main.h
+
+
+###### Дизассемблирование
+
+disassemble: main.dump main.o.dump sum.o.dump
+
+main.dump: main
+	gobjdump -S -D -M intel main > main.dump
+
+main.o.dump: main.o
+	gobjdump -S -D -M intel main.o > main.o.dump
+
+sum.o.dump: sum.o
+	gobjdump -S -D -M intel sum.o > sum.o.dump
+
+
+clean:
+	rm -rf *.o *.s *.gch main *.dump
